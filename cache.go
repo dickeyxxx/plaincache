@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 type Cacher interface {
 	Read(key string) (string, bool)
 	Write(key string, val string)
@@ -10,13 +8,25 @@ type Cacher interface {
 
 type Cache struct {
 	cache   map[string]string
+	reads   chan cacheReadRequest
 	writes  chan [2]string
 	deletes chan string
+}
+
+type cacheReadRequest struct {
+	key     string
+	results chan cacheResponse
+}
+
+type cacheResponse struct {
+	val string
+	ok  bool
 }
 
 func NewCache() *Cache {
 	c := &Cache{
 		cache:   make(map[string]string),
+		reads:   make(chan cacheReadRequest),
 		writes:  make(chan [2]string),
 		deletes: make(chan string),
 	}
@@ -26,8 +36,10 @@ func NewCache() *Cache {
 }
 
 func (c *Cache) Read(key string) (string, bool) {
-	val, ok := c.cache[key]
-	return val, ok
+	responseChan := make(chan cacheResponse)
+	c.reads <- cacheReadRequest{key, responseChan}
+	response := <-responseChan
+	return response.val, response.ok
 }
 
 func (c *Cache) Write(key string, val string) {
@@ -35,21 +47,21 @@ func (c *Cache) Write(key string, val string) {
 }
 
 func (c *Cache) Delete(key string) {
-	fmt.Println("deleting", key)
 	c.deletes <- key
-	fmt.Println("deleted", key)
-	delete(c.cache, key)
 }
 
 func (c *Cache) listen() {
 	for {
+		var request cacheReadRequest
 		var tuple [2]string
 		var key string
 		select {
+		case request = <-c.reads:
+			val, ok := c.cache[request.key]
+			request.results <- cacheResponse{val, ok}
 		case tuple = <-c.writes:
 			c.cache[tuple[0]] = tuple[1]
 		case key = <-c.deletes:
-			fmt.Println("deleting in goroutine", key)
 			delete(c.cache, key)
 		}
 	}
