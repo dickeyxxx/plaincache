@@ -1,6 +1,11 @@
 plaincache
 ==========
 
+[![wercker
+status](https://app.wercker.com/status/d90d1fff5d014f9e42db9cf4fec0d4b3/m
+"wercker
+status")](https://app.wercker.com/project/bykey/d90d1fff5d014f9e42db9cf4fec0d4b3)
+
 A very simple in-memory cache with a RESTful API
 
 Install with `go get github.com/gomicroprojects/plaincache`
