@@ -39,7 +39,7 @@ func TestCache(t *testing.T) {
 
 			Convey("Cache read", func() {
 				result, _ := c.Read("foo")
-				So(result, ShouldEqual, "bar1")
+				So(result, ShouldEqual, "bar3")
 			})
 		})
 	})
